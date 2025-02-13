@@ -68,7 +68,7 @@ markupsafe==3.0.2
     # via jinja2
 mdurl==0.1.2
     # via markdown-it-py
-multilspy==0.0.12
+multilspy @ git+https://github.com/engines-dev/multilspy.git@74aff398917c115bb601ea0de577689c0310e2f5
     # via crankshaft (pyproject.toml)
 parso==0.8.4
     # via jedi

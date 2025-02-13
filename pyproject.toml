@@ -4,7 +4,7 @@ version = "0.0.1"
 description = "A REST API for running langauge servers in a docker container"
 requires-python = ">=3.11"
 dependencies = [
-  "multilspy == 0.0.12",
+  "multilspy @ git+https://github.com/engines-dev/multilspy.git",
   "fastapi[standard] >= 0.115.8",
 ]
 
