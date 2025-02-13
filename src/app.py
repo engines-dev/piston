@@ -1,6 +1,10 @@
-from typing import Union
+from typing import Annotated
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
+from urllib.parse import unquote
+from multilspy import LanguageServer
+
+from language_server import get_language_server
 
 app = FastAPI()
 
@@ -10,6 +14,25 @@ def read_root():
     return {"Hello": "World, from FastAPI!"}
 
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
+@app.get("/definitions")
+async def definitions(
+    path: str,
+    line: int,
+    column: int,
+    lsp: Annotated[LanguageServer, Depends(get_language_server)],
+):
+    path = unquote(path)  # in case it comes in URL encoded
+    res = await lsp.request_definition(path, line, column)
+    return {"definitions": res}
+
+
+@app.get("/references")
+async def references(
+    path: str,
+    line: int,
+    column: int,
+    lsp: Annotated[LanguageServer, Depends(get_language_server)],
+):
+    path = unquote(path)  # in case it comes in URL encoded
+    res = await lsp.request_references(path, line, column)
+    return {"references": res}
