@@ -16,3 +16,6 @@ docker-compose.yml
 */temp*
 */*/temp*
 docker
+
+**/__pycache__
+**/*.pyc
