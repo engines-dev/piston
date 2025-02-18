@@ -5,6 +5,7 @@ node_modules/
 
 .env
 .venv
+.envrc
 env/
 venv/
 ENV/
@@ -60,3 +61,4 @@ MANIFEST
 *.crt
 
 
+.aider*
