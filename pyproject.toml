@@ -6,6 +6,10 @@ requires-python = ">=3.11"
 dependencies = [
   "multilspy @ git+https://github.com/engines-dev/multilspy.git",
   "fastapi[standard] >= 0.115.8",
+  "tree-sitter >= 0.24.0",
+  "tree-sitter-diff @ git+https://github.com/the-mikedavis/tree-sitter-diff.git",
+  "tree-sitter-python >= 0.23.6",
+  "pydantic-settings>=2.7.1",
 ]
 
 [tool.pyright]
