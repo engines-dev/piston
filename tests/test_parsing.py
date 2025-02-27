@@ -112,7 +112,7 @@ index 0000000..06806ea
 
 
 def test_parse_diff_patch():
-    hunks = parse_diff_patch(example_diff, "python")
+    hunks = parse_diff_patch(example_diff, "Python")
 
     assert isinstance(hunks, list)
     assert len(hunks) == 4

@@ -1,21 +1,8 @@
 from enum import Enum
 from dataclasses import dataclass
-from tree_sitter import Language, Parser
-import tree_sitter_diff
+from tree_sitter import Parser
 
-
-def get_language_parser(language: str):
-    if language == "diff":
-        return Parser(Language(tree_sitter_diff.language()))
-    elif language == "python":
-        import tree_sitter_python
-
-        return Parser(Language(tree_sitter_python.language()))
-    # elif language == "typescript":
-    #     import tree_sitter_typescript
-    #     return Parser(Language(tree_sitter_typescript.language()))
-    else:
-        raise ValueError(f"Unsupported language: {language}")
+from .language import get_language_parser
 
 
 @dataclass
@@ -62,17 +49,18 @@ class Hunk:
 
 def parse_diff_patch(patch: bytes, patch_language: str) -> list[Hunk]:
     patch_parser = get_language_parser(patch_language)
+    diff_parser = get_language_parser("Diff")
 
-    diff_lang = Language(tree_sitter_diff.language())
-    diff_parser = Parser(diff_lang)
+    # diff_lang = Language(tree_sitter_diff.language())
+    # diff_parser = Parser(diff_lang)
     tree = diff_parser.parse(patch)
 
     hunks: list[Hunk] = []
 
     # we first break it down to "blocks", which will tell us the old and new file names of the hunks
-    blocks_query = diff_lang.query("(block) @block")
+    blocks_query = tree.language.query("(block) @block")
     for block_node in blocks_query.captures(tree.root_node)["block"]:
-        file_name_query = diff_lang.query(
+        file_name_query = tree.language.query(
             """
             (new_file (filename) @new_file)
             (old_file (filename) @old_file)
@@ -91,14 +79,14 @@ def parse_diff_patch(patch: bytes, patch_language: str) -> list[Hunk]:
         )
 
         # we then break it down to "hunks"
-        hunks_query = diff_lang.query("(hunk) @hunk")
+        hunks_query = tree.language.query("(hunk) @hunk")
         # `captures` in theory should return nodes in consistent order, but because we are querying
         # it multiple times, the sort order is messed up, so we manually sort it here
         hunk_nodes = sorted(
             hunks_query.captures(block_node)["hunk"], key=lambda x: x.start_byte
         )
         for hunk_node in hunk_nodes:
-            line_index_query = diff_lang.query(
+            line_index_query = tree.language.query(
                 """
                 (location (linerange) @old_line_index (linerange) @new_line_index)
             """
@@ -132,7 +120,7 @@ def parse_diff_patch(patch: bytes, patch_language: str) -> list[Hunk]:
                 )
             # now we go through the changes in the hunk line by line
             changes = []
-            changes_query = diff_lang.query("(changes) @changes")
+            changes_query = tree.language.query("(changes) @changes")
             # there should only be one changes node
             for change_node in changes_query.captures(hunk_node)["changes"][0].children:
                 text = (
