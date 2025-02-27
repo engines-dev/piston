@@ -1,6 +1,11 @@
 # base starts with both python and nodejs runtimes
+# it's also the most convenient to install ruby-github-linguist here, even though it should
+# technicaly be done at the final image only, we avoid redundant apt update by just doing it here
 FROM python:slim AS base
-RUN apt update && apt install -y nodejs && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN apt update \
+  && apt install -y nodejs ruby-github-linguist \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
 # builder image
 FROM base AS builder
