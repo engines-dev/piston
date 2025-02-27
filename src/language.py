@@ -1,11 +1,10 @@
 from enum import Enum
 from tree_sitter import Language, Parser
-import tree_sitter_diff
+from typing import cast
 
 
 class SupportedLanguage(Enum):
     Python = "Python"
-    TypeScript = "TypeScript"
     Diff = "Diff"
 
 
@@ -18,13 +17,16 @@ def get_language_parser(language: str):
         raise ValueError(f"Unsupported language: {language}")
     lang = SupportedLanguage[language]
     if lang == SupportedLanguage.Diff:
-        return Parser(Language(tree_sitter_diff.language()))
+        import tree_sitter_diff
+
+        lang = tree_sitter_diff.language()
+        # cast is just to get rid of pyright error because it's not able to infer lang's type
+        # since it comes from C bindings
+        return Parser(Language(cast(object, lang)))
     elif lang == SupportedLanguage.Python:
         import tree_sitter_python
 
-        return Parser(Language(tree_sitter_python.language()))
-    # elif language == "typescript":
-    #     import tree_sitter_typescript
-    #     return Parser(Language(tree_sitter_typescript.language()))
+        lang = tree_sitter_python.language()
+        return Parser(Language(cast(object, lang)))
     else:
         raise ValueError(f"Unsupported language: {language}")
