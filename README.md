@@ -209,30 +209,30 @@ Piston provides several REST API endpoints:
   Given a diff patch such as this one:
 
   ```diff
-    diff --git main.py main.py
-    index 3f9a1e8..dc99c56 100644
-    --- main.py
-    +++ main.py
-    @@ -1,4 +1,4 @@
-    -from utils import is_even
-    +from utils import is_even, is_positive
-     from data import Person
+  diff --git main.py main.py
+  index 3f9a1e8..dc99c56 100644
+  --- main.py
+  +++ main.py
+  @@ -1,4 +1,4 @@
+  -from utils import is_even
+  +from utils import is_even, is_positive
+   from data import Person
 
 
-    @@ -7,6 +7,8 @@ def greet_person(person):
-         greeting = f"Hello, {person.name}!"
-         if is_even(person.age):
-             greeting += " You have an even age."
-    +    if is_positive(person.age):
-    +        greeting += " And you have a positive age. How surprising!"
-         return greeting
+  @@ -7,6 +7,8 @@ def greet_person(person):
+       greeting = f"Hello, {person.name}!"
+       if is_even(person.age):
+           greeting += " You have an even age."
+  +    if is_positive(person.age):
+  +        greeting += " And you have a positive age. How surprising!"
+       return greeting
   ```
 
   ```shell
   ❯ curl \
       -X POST \
       -H "Content-Type: multipart/form-data" \
-      -F "patch=@patch.diff" \
+      -F "patch=@example-wrokspace/patch.diff" \
       "localhost:8000/patch-digest"
   ```
 
