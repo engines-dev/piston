@@ -28,8 +28,8 @@ Docker Hub or build it locally:
 - Pull from Docker Hub
 
 ```
-docker pull docker.io/jetzhou/piston:latest
-docker tag jetzhou/piston:latest piston
+docker pull ghcr.io/engines-dev/piston:latest
+docker tag ghcr.io/engines-dev/piston:latest piston
 ```
 
 - Build Docker image locally (after you have checked out the repository)
