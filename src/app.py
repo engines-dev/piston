@@ -25,31 +25,27 @@ settings = Settings()
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     global settings
-    if os.environ.get("CODE_LANGUAGE") is not None:
+
+    if len(os.environ.get("CODE_LANGUAGE", "")) > 0:
         settings.code_language = os.environ.get("CODE_LANGUAGE")
     else:
-        linguist_output = json.loads(
+        shell_output = json.loads(
             subprocess.check_output(
-                ["github-linguist", "--json"],
+                ["enry", "-json"],
                 cwd=settings.workspace_root,
             )
         )
         # output looks like
-        # {
-        #   "Shell": { "size": 5430, "percentage": "1.38" },
-        #   "JavaScript": { "size": 2211, "percentage": "0.56" },
-        #   "TypeScript": { "size": 385771, "percentage": "97.91" },
-        #   "HTML": { "size": 590, "percentage": "0.15" }
-        # }
+        # [{"color":"#3572A5","language":"Python","percentage":"100.00%","type":"unknown"}]
         top_language = max(
-            linguist_output.items(),
-            key=lambda lang: float(lang[1]["percentage"]),
+            shell_output,
+            key=lambda lang: float(lang["percentage"].rstrip("%")),
         )
         if not top_language:
             raise ValueError("Unable to determine code language in workspace")
-        if not is_language_supported(top_language[0]):
-            raise ValueError(f"Unsupported code language: {top_language[0]}")
-        settings.code_language = top_language[0]
+        if not is_language_supported(top_language["language"]):
+            raise ValueError(f"Unsupported code language: {top_language["lanaguage"]}")
+        settings.code_language = top_language["language"]
     yield
 
 
@@ -57,7 +53,11 @@ app = FastAPI(lifespan=lifespan)
 
 
 async def language_server():
-    config = MultilspyConfig.from_dict({"code_language": settings.code_language})
+    assert settings.code_language is not None
+
+    config = MultilspyConfig.from_dict(
+        {"code_language": settings.code_language.lower()}
+    )
     logger = MultilspyLogger()
     server = LanguageServer.create(config, logger, settings.workspace_root)
     async with server.start_server() as server:

@@ -15,6 +15,7 @@ def is_language_supported(language: str) -> bool:
 def get_language_parser(language: str):
     if not is_language_supported(language):
         raise ValueError(f"Unsupported language: {language}")
+
     lang = SupportedLanguage[language]
     if lang == SupportedLanguage.Diff:
         import tree_sitter_diff
