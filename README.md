@@ -32,7 +32,7 @@ docker pull docker.io/jetzhou/piston:latest
 docker tag jetzhou/piston:latest piston
 ```
 
-- Build Docker image locally
+- Build Docker image locally (after you have checked out the repository)
 
 ```
 docker build -t piston .
@@ -47,6 +47,11 @@ docker run -d -p 8000:8000 -v /path/to/workspace:/workspace piston
 where `/path/to/workspace` is the path to your codebase. Without this volume mount, Piston will use
 an example Python project in the container. The `curl` command examples below uses the example
 project.
+
+### Docker Image Environment Variables (optional)
+
+- `WORKSPACE_ROOT`: Path to the workspace directory (default: `/workspace`)
+- `CODE_LANGUAGE`: Explicitly set the code language (if not set, will be auto-detected)
 
 ## Endpoints
 
@@ -324,11 +329,6 @@ index 3f9a1e8..dc99c56 100644
 }
 ```
 
-### Environment Variables
-
-- `WORKSPACE_ROOT`: Path to the workspace directory (default: `/workspace`)
-- `CODE_LANGUAGE`: Explicitly set the code language (if not set, will be auto-detected)
-
 ## Supported Languages
 
 Currently, Piston supports:
@@ -344,6 +344,8 @@ Other languages can be added easily but Python is the only one tested so far.
 - Docker
 - Python 3.13+
 
+### Development Steps
+
 1. Clone the repository:
 
    ```
@@ -354,8 +356,9 @@ Other languages can be added easily but Python is the only one tested so far.
 2. Install dependencies:
 
    ```
-   pip install -e .
-   pip install -r requirements-dev.txt
+   uv venv
+   source .venv/bin/activate
+   uv pip install -r requirements-dev.txt
    ```
 
 3. Run tests:
