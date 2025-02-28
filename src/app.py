@@ -10,8 +10,7 @@ from multilspy.multilspy_logger import MultilspyLogger
 from pydantic_settings import BaseSettings
 from typing import Annotated, Optional
 
-from .language import is_language_supported
-from .parsing import parse_diff_patch
+from .parsing import parse_diff_patch, is_language_supported
 
 
 class Settings(BaseSettings):
@@ -92,7 +91,7 @@ async def symbols(
     lsp: Annotated[LanguageServer, Depends(language_server)],
 ):
     res = await lsp.request_document_symbols(path)
-    return {"symbols": res}
+    return {"symbols": res[0]}
 
 
 @app.post("/patch-digest")
