@@ -25,7 +25,7 @@ Piston is meant to be run with [Docker](https://www.docker.com/) because its mai
 packing of the needed language server binaries. You can either pull the pre-built Docker image from
 Docker Hub or build it locally:
 
-- Pull from Docker Hub
+- Pull from GitHub Container Registry
 
 ```
 docker pull ghcr.io/engines-dev/piston:latest
@@ -35,13 +35,13 @@ docker tag ghcr.io/engines-dev/piston:latest piston
 - Build Docker image locally (after you have checked out the repository)
 
 ```
-docker build -t piston .
+docker build --tag piston .
 ```
 
 Once the Docker image is ready, run the image with the following command:
 
 ```
-docker run -d -p 8000:8000 -v /path/to/workspace:/workspace piston
+docker run --tty --rm --publish 8000:8000 --volume /path/to/workspace:/workspace piston
 ```
 
 where `/path/to/workspace` is the path to your codebase. Without this volume mount, Piston will use
@@ -62,7 +62,7 @@ Piston provides several REST API endpoints:
 Find definitions for a symbol at a specific location
 
 ```shell
-❯ curl "localhost:8000/definitions?path=main.py&line=8&column=11"
+curl "localhost:8000/definitions?path=main.py&line=8&column=11"
 ```
 
 ```json
@@ -92,7 +92,7 @@ Find definitions for a symbol at a specific location
 Find references to a symbol at a specific location
 
 ```shell
-❯ curl "localhost:8000/references?path=utils.py&line=0&column=4"
+curl "localhost:8000/references?path=utils.py&line=0&column=4"
 ```
 
 ```json
@@ -152,7 +152,7 @@ Find references to a symbol at a specific location
 Get all symbols in a file
 
 ```shell
-❯ curl "localhost:8000/symbols?path=utils.py"
+curl "localhost:8000/symbols?path=utils.py"
 ```
 
 ```json
@@ -239,11 +239,11 @@ index 3f9a1e8..dc99c56 100644
 ```
 
 ```shell
-❯ curl \
-    -X POST \
-    -H "Content-Type: multipart/form-data" \
-    -F "patch=@example-wrokspace/patch.diff" \
-    "localhost:8000/patch-digest"
+curl \
+  -X POST \
+  -H "Content-Type: multipart/form-data" \
+  -F "patch=@example-workspace/patch.diff" \
+  "localhost:8000/patch-digest"
 ```
 
 ```json
@@ -370,7 +370,8 @@ Other languages can be added easily but Python is the only one tested so far.
 4. Run the development server:
 
    ```
-   docker run -it \
+   docker run \
+     --interactive --tty --rm \
      --publish 8000:8000 \
      --volume .:/app \
      --volume /path/to/workspace:/workspace \
