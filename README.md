@@ -38,9 +38,7 @@ docker tag jetzhou/piston:latest piston
 docker build -t piston .
 ```
 
-## Usage
-
-### Run the Docker container
+Once the Docker image is ready, run the image with the following command:
 
 ```
 docker run -d -p 8000:8000 -v /path/to/workspace:/workspace piston
@@ -50,274 +48,281 @@ where `/path/to/workspace` is the path to your codebase. Without this volume mou
 an example Python project in the container. The `curl` command examples below uses the example
 project.
 
-### Endpoints
+## Endpoints
 
 Piston provides several REST API endpoints:
 
-- `GET /definitions`: Find definitions for a symbol at a specific location
+### `GET /definitions`
 
-  ```shell
-  ❯ curl "localhost:8000/definitions?path=main.py&line=8&column=11"
-  ```
+Find definitions for a symbol at a specific location
 
-  ```json
-  {
-    "definitions": [
-      {
-        "uri": "file:///workspace/main.py",
-        "range": {
-          "start": {
-            "line": 5,
-            "character": 4
-          },
-          "end": {
-            "line": 5,
-            "character": 12
-          }
+```shell
+❯ curl "localhost:8000/definitions?path=main.py&line=8&column=11"
+```
+
+```json
+{
+  "definitions": [
+    {
+      "uri": "file:///workspace/main.py",
+      "range": {
+        "start": {
+          "line": 5,
+          "character": 4
         },
-        "absolutePath": "/workspace/main.py",
-        "relativePath": "main.py"
-      }
-    ]
-  }
-  ```
-
-- `GET /references`: Find references to a symbol at a specific location
-
-  ```shell
-  ❯ curl "localhost:8000/references?path=utils.py&line=0&column=4"
-  ```
-
-  ```json
-  {
-    "references": [
-      {
-        "uri": "file:///workspace/main.py",
-        "range": {
-          "start": {
-            "line": 0,
-            "character": 18
-          },
-          "end": {
-            "line": 0,
-            "character": 25
-          }
-        },
-        "absolutePath": "/workspace/main.py",
-        "relativePath": "main.py"
+        "end": {
+          "line": 5,
+          "character": 12
+        }
       },
-      {
-        "uri": "file:///workspace/main.py",
-        "range": {
-          "start": {
-            "line": 6,
-            "character": 7
-          },
-          "end": {
-            "line": 6,
-            "character": 14
-          }
+      "absolutePath": "/workspace/main.py",
+      "relativePath": "main.py"
+    }
+  ]
+}
+```
+
+### `GET /references`
+
+Find references to a symbol at a specific location
+
+```shell
+❯ curl "localhost:8000/references?path=utils.py&line=0&column=4"
+```
+
+```json
+{
+  "references": [
+    {
+      "uri": "file:///workspace/main.py",
+      "range": {
+        "start": {
+          "line": 0,
+          "character": 18
         },
-        "absolutePath": "/workspace/main.py",
-        "relativePath": "main.py"
+        "end": {
+          "line": 0,
+          "character": 25
+        }
       },
-      {
-        "uri": "file:///workspace/utils.py",
-        "range": {
-          "start": {
-            "line": 0,
-            "character": 4
-          },
-          "end": {
-            "line": 0,
-            "character": 11
-          }
+      "absolutePath": "/workspace/main.py",
+      "relativePath": "main.py"
+    },
+    {
+      "uri": "file:///workspace/main.py",
+      "range": {
+        "start": {
+          "line": 6,
+          "character": 7
         },
-        "absolutePath": "/workspace/utils.py",
-        "relativePath": "utils.py"
-      }
-    ]
-  }
-  ```
-
-- `GET /symbols`: Get all symbols in a file
-
-  ```shell
-  ❯ curl "localhost:8000/symbols?path=utils.py"
-  ```
-
-  ```json
-  {
-    "symbols": [
-      {
-        "name": "is_even",
-        "kind": "Function",
-        "range": {
-          "start": {
-            "line": 0,
-            "character": 0
-          },
-          "end": {
-            "line": 2,
-            "character": 26
-          }
-        },
-        "selectionRange": {
-          "start": {
-            "line": 0,
-            "character": 4
-          },
-          "end": {
-            "line": 0,
-            "character": 11
-          }
-        },
-        "detail": "def is_even"
+        "end": {
+          "line": 6,
+          "character": 14
+        }
       },
-      {
-        "name": "is_positive",
-        "kind": "Function",
-        "range": {
-          "start": {
-            "line": 4,
-            "character": 0
-          },
-          "end": {
-            "line": 6,
-            "character": 21
-          }
+      "absolutePath": "/workspace/main.py",
+      "relativePath": "main.py"
+    },
+    {
+      "uri": "file:///workspace/utils.py",
+      "range": {
+        "start": {
+          "line": 0,
+          "character": 4
         },
-        "selectionRange": {
-          "start": {
-            "line": 4,
-            "character": 4
-          },
-          "end": {
-            "line": 4,
-            "character": 15
-          }
-        },
-        "detail": "def is_positive"
-      }
-    ]
-  }
-  ```
-
-- `POST /patch-digest`: Analyze a diff patch and return a digest of the changes as well as the
-  identifiers in the changed lines.
-
-  Given a diff patch such as this one:
-
-  ```diff
-  diff --git main.py main.py
-  index 3f9a1e8..dc99c56 100644
-  --- main.py
-  +++ main.py
-  @@ -1,4 +1,4 @@
-  -from utils import is_even
-  +from utils import is_even, is_positive
-   from data import Person
-
-
-  @@ -7,6 +7,8 @@ def greet_person(person):
-       greeting = f"Hello, {person.name}!"
-       if is_even(person.age):
-           greeting += " You have an even age."
-  +    if is_positive(person.age):
-  +        greeting += " And you have a positive age. How surprising!"
-       return greeting
-  ```
-
-  ```shell
-  ❯ curl \
-      -X POST \
-      -H "Content-Type: multipart/form-data" \
-      -F "patch=@example-wrokspace/patch.diff" \
-      "localhost:8000/patch-digest"
-  ```
-
-  ```json
-  {
-    "digest": [
-      {
-        "old_file": "main.py",
-        "new_file": "main.py",
-        "changes": [
-          {
-            "line_index": 0,
-            "text": "from utils import is_even",
-            "type": "deletion",
-            "identifiers": [
-              {
-                "name": "utils",
-                "char_index": 5
-              },
-              {
-                "name": "is_even",
-                "char_index": 18
-              }
-            ]
-          },
-          {
-            "line_index": 0,
-            "text": "from utils import is_even, is_positive",
-            "type": "addition",
-            "identifiers": [
-              {
-                "name": "utils",
-                "char_index": 5
-              },
-              {
-                "name": "is_even",
-                "char_index": 18
-              },
-              {
-                "name": "is_positive",
-                "char_index": 27
-              }
-            ]
-          }
-        ]
+        "end": {
+          "line": 0,
+          "character": 11
+        }
       },
-      {
-        "old_file": "main.py",
-        "new_file": "main.py",
-        "changes": [
-          {
-            "line_index": 9,
-            "text": "    if is_positive(person.age):",
-            "type": "addition",
-            "identifiers": [
-              {
-                "name": "is_positive",
-                "char_index": 7
-              },
-              {
-                "name": "person",
-                "char_index": 19
-              },
-              {
-                "name": "age",
-                "char_index": 26
-              }
-            ]
-          },
-          {
-            "line_index": 10,
-            "text": "        greeting += \" And you have a positive age. How surprising!\"",
-            "type": "addition",
-            "identifiers": [
-              {
-                "name": "greeting",
-                "char_index": 8
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  }
-  ```
+      "absolutePath": "/workspace/utils.py",
+      "relativePath": "utils.py"
+    }
+  ]
+}
+```
+
+### `GET /symbols`
+
+Get all symbols in a file
+
+```shell
+❯ curl "localhost:8000/symbols?path=utils.py"
+```
+
+```json
+{
+  "symbols": [
+    {
+      "name": "is_even",
+      "kind": "Function",
+      "range": {
+        "start": {
+          "line": 0,
+          "character": 0
+        },
+        "end": {
+          "line": 2,
+          "character": 26
+        }
+      },
+      "selectionRange": {
+        "start": {
+          "line": 0,
+          "character": 4
+        },
+        "end": {
+          "line": 0,
+          "character": 11
+        }
+      },
+      "detail": "def is_even"
+    },
+    {
+      "name": "is_positive",
+      "kind": "Function",
+      "range": {
+        "start": {
+          "line": 4,
+          "character": 0
+        },
+        "end": {
+          "line": 6,
+          "character": 21
+        }
+      },
+      "selectionRange": {
+        "start": {
+          "line": 4,
+          "character": 4
+        },
+        "end": {
+          "line": 4,
+          "character": 15
+        }
+      },
+      "detail": "def is_positive"
+    }
+  ]
+}
+```
+
+### `POST /patch-digest`
+
+Analyze a diff patch and return a digest of the changes as well as the identifiers in the changed lines.
+
+Given a diff patch such as this one:
+
+```diff
+diff --git main.py main.py
+index 3f9a1e8..dc99c56 100644
+--- main.py
++++ main.py
+@@ -1,4 +1,4 @@
+-from utils import is_even
++from utils import is_even, is_positive
+ from data import Person
+
+
+@@ -7,6 +7,8 @@ def greet_person(person):
+     greeting = f"Hello, {person.name}!"
+     if is_even(person.age):
+         greeting += " You have an even age."
++    if is_positive(person.age):
++        greeting += " And you have a positive age. How surprising!"
+     return greeting
+```
+
+```shell
+❯ curl \
+    -X POST \
+    -H "Content-Type: multipart/form-data" \
+    -F "patch=@example-wrokspace/patch.diff" \
+    "localhost:8000/patch-digest"
+```
+
+```json
+{
+  "digest": [
+    {
+      "old_file": "main.py",
+      "new_file": "main.py",
+      "changes": [
+        {
+          "line_index": 0,
+          "text": "from utils import is_even",
+          "type": "deletion",
+          "identifiers": [
+            {
+              "name": "utils",
+              "char_index": 5
+            },
+            {
+              "name": "is_even",
+              "char_index": 18
+            }
+          ]
+        },
+        {
+          "line_index": 0,
+          "text": "from utils import is_even, is_positive",
+          "type": "addition",
+          "identifiers": [
+            {
+              "name": "utils",
+              "char_index": 5
+            },
+            {
+              "name": "is_even",
+              "char_index": 18
+            },
+            {
+              "name": "is_positive",
+              "char_index": 27
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "old_file": "main.py",
+      "new_file": "main.py",
+      "changes": [
+        {
+          "line_index": 9,
+          "text": "    if is_positive(person.age):",
+          "type": "addition",
+          "identifiers": [
+            {
+              "name": "is_positive",
+              "char_index": 7
+            },
+            {
+              "name": "person",
+              "char_index": 19
+            },
+            {
+              "name": "age",
+              "char_index": 26
+            }
+          ]
+        },
+        {
+          "line_index": 10,
+          "text": "        greeting += \" And you have a positive age. How surprising!\"",
+          "type": "addition",
+          "identifiers": [
+            {
+              "name": "greeting",
+              "char_index": 8
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
 
 ### Environment Variables
 
