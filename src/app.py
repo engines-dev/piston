@@ -1,16 +1,16 @@
+from contextlib import asynccontextmanager
+import json
 import os
 import subprocess
-import json
-from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends, File
-from multilspy import LanguageServer
-from multilspy import LanguageServer
-from multilspy.multilspy_config import MultilspyConfig
-from multilspy.multilspy_logger import MultilspyLogger
-from pydantic_settings import BaseSettings
 from typing import Annotated, Optional
 
-from .parsing import parse_diff_patch, is_language_supported
+from fastapi import Depends, FastAPI, File
+from multilspy import LanguageServer
+from multilspy.multilspy_types import SymbolKind
+from pydantic_settings import BaseSettings
+
+from .language_server import get_language_server
+from .parsing import is_language_supported, parse_diff_patch
 
 
 class Settings(BaseSettings):
@@ -53,12 +53,7 @@ app = FastAPI(lifespan=lifespan)
 
 async def language_server():
     assert settings.code_language is not None
-
-    config = MultilspyConfig.from_dict(
-        {"code_language": settings.code_language.lower()}
-    )
-    logger = MultilspyLogger()
-    server = LanguageServer.create(config, logger, settings.workspace_root)
+    server = get_language_server(settings.code_language, settings.workspace_root)
     async with server.start_server() as server:
         yield server
 
@@ -91,7 +86,32 @@ async def symbols(
     lsp: Annotated[LanguageServer, Depends(language_server)],
 ):
     res = await lsp.request_document_symbols(path)
-    return {"symbols": res[0]}
+    # each symbol is of the shape
+    # {
+    #   "name": "is_even",
+    #   "kind": 12,
+    #   "range": {
+    #     "start": { "line": 0, "character": 0 },
+    #     "end": { "line": 2, "character": 26 }
+    #   },
+    #   "selectionRange": {
+    #     "start": { "line": 0, "character": 4 },
+    #     "end": { "line": 0, "character": 11 }
+    #   },
+    #   "detail": "def is_even"
+    # }
+    # we just need to convert the `kind` to its string name
+    return {
+        "symbols": list(
+            map(
+                lambda symbol: {
+                    **symbol,
+                    "kind": SymbolKind(symbol["kind"]).name,
+                },
+                res[0],
+            )
+        )
+    }
 
 
 @app.post("/patch-digest")
