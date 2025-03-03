@@ -5,8 +5,7 @@ import os
 import subprocess
 from typing import Annotated, Optional
 
-from fastapi import Depends, FastAPI, File
-from multilspy import LanguageServer
+from fastapi import FastAPI, File
 from multilspy.multilspy_types import SymbolKind
 from pydantic_settings import BaseSettings
 
@@ -26,7 +25,7 @@ settings = Settings()
 
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI):
+async def lifespan(app: FastAPI):
     global settings
 
     if len(os.environ.get("CODE_LANGUAGE", "")) > 0:
@@ -52,18 +51,16 @@ async def lifespan(_app: FastAPI):
             raise ValueError("Unable to determine code language in workspace")
         if not is_language_supported(top_language["language"]):
             raise ValueError(f"Unsupported code language: {top_language["lanaguage"]}")
+        logger.info(f"{top_language['language']} is the top language in the workspace and will be used for language server")
         settings.code_language = top_language["language"]
-    yield
+
+    assert settings.code_language is not None
+    app.state.lsp = get_language_server(settings.code_language, settings.workspace_root)
+    async with app.state.lsp.start_server():
+        yield
 
 
 app = FastAPI(lifespan=lifespan)
-
-
-async def language_server():
-    assert settings.code_language is not None
-    server = get_language_server(settings.code_language, settings.workspace_root)
-    async with server.start_server() as server:
-        yield server
 
 
 @app.get("/definitions")
@@ -71,9 +68,8 @@ async def definitions(
     path: str,
     line: int,
     column: int,
-    lsp: Annotated[LanguageServer, Depends(language_server)],
 ):
-    res = await lsp.request_definition(path, line, column)
+    res = await app.state.lsp.request_definition(path, line, column)
     return {"definitions": res}
 
 
@@ -82,18 +78,16 @@ async def references(
     path: str,
     line: int,
     column: int,
-    lsp: Annotated[LanguageServer, Depends(language_server)],
 ):
-    res = await lsp.request_references(path, line, column)
+    res = await app.state.lsp.request_references(path, line, column)
     return {"references": res}
 
 
 @app.get("/symbols")
 async def symbols(
     path: str,
-    lsp: Annotated[LanguageServer, Depends(language_server)],
 ):
-    res = await lsp.request_document_symbols(path)
+    res = await app.state.lsp.request_document_symbols(path)
     # each symbol is of the shape
     # {
     #   "name": "is_even",
