@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 import json
+import logging
 import os
 import subprocess
 from typing import Annotated, Optional
@@ -11,6 +12,9 @@ from pydantic_settings import BaseSettings
 
 from .language_server import get_language_server
 from .parsing import is_language_supported, parse_diff_patch
+
+
+logger = logging.getLogger("uvicorn")
 
 
 class Settings(BaseSettings):
@@ -28,12 +32,16 @@ async def lifespan(_app: FastAPI):
     if len(os.environ.get("CODE_LANGUAGE", "")) > 0:
         settings.code_language = os.environ.get("CODE_LANGUAGE")
     else:
+        logger.info(f"Detecting code languages in workspace: {settings.workspace_root}")
         shell_output = json.loads(
             subprocess.check_output(
                 ["enry", "-json"],
                 cwd=settings.workspace_root,
             )
         )
+        logger.info(f"The following languages are detected: {', '.join( [
+            f"{lang['language']}={lang['percentage']}" for lang in shell_output
+        ])}")
         # output looks like
         # [{"color":"#3572A5","language":"Python","percentage":"100.00%","type":"unknown"}]
         top_language = max(
