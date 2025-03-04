@@ -62,7 +62,7 @@ Piston provides several REST API endpoints:
 Find definitions for a symbol at a specific location
 
 ```shell
-curl "localhost:8000/definitions?path=main.py&line=8&column=11"
+curl "localhost:8000/definitions?path=main.py&line=8&character=11"
 ```
 
 ```json
@@ -92,7 +92,7 @@ curl "localhost:8000/definitions?path=main.py&line=8&column=11"
 Find references to a symbol at a specific location
 
 ```shell
-curl "localhost:8000/references?path=utils.py&line=0&column=4"
+curl "localhost:8000/references?path=utils.py&line=0&character=4"
 ```
 
 ```json
@@ -188,21 +188,21 @@ curl "localhost:8000/symbols?path=utils.py"
       "kind": "Function",
       "range": {
         "start": {
-          "line": 4,
+          "line": 5,
           "character": 0
         },
         "end": {
-          "line": 6,
+          "line": 7,
           "character": 21
         }
       },
       "selectionRange": {
         "start": {
-          "line": 4,
+          "line": 5,
           "character": 4
         },
         "end": {
-          "line": 4,
+          "line": 5,
           "character": 15
         }
       },
@@ -254,36 +254,36 @@ curl \
       "new_file": "main.py",
       "changes": [
         {
-          "line_index": 0,
+          "line": 0,
           "text": "from utils import is_even",
           "type": "deletion",
           "identifiers": [
             {
               "name": "utils",
-              "char_index": 5
+              "character": 5
             },
             {
               "name": "is_even",
-              "char_index": 18
+              "character": 18
             }
           ]
         },
         {
-          "line_index": 0,
+          "line": 0,
           "text": "from utils import is_even, is_positive",
           "type": "addition",
           "identifiers": [
             {
               "name": "utils",
-              "char_index": 5
+              "character": 5
             },
             {
               "name": "is_even",
-              "char_index": 18
+              "character": 18
             },
             {
               "name": "is_positive",
-              "char_index": 27
+              "character": 27
             }
           ]
         }
@@ -294,32 +294,32 @@ curl \
       "new_file": "main.py",
       "changes": [
         {
-          "line_index": 9,
+          "line": 9,
           "text": "    if is_positive(person.age):",
           "type": "addition",
           "identifiers": [
             {
               "name": "is_positive",
-              "char_index": 7
+              "character": 7
             },
             {
               "name": "person",
-              "char_index": 19
+              "character": 19
             },
             {
               "name": "age",
-              "char_index": 26
+              "character": 26
             }
           ]
         },
         {
-          "line_index": 10,
+          "line": 10,
           "text": "        greeting += \" And you have a positive age. How surprising!\"",
           "type": "addition",
           "identifiers": [
             {
               "name": "greeting",
-              "char_index": 8
+              "character": 8
             }
           ]
         }

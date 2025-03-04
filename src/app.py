@@ -38,9 +38,11 @@ async def lifespan(app: FastAPI):
                 cwd=settings.workspace_root,
             )
         )
-        logger.info(f"The following languages are detected: {', '.join( [
+        logger.info(
+            f"The following languages are detected: {', '.join( [
             f"{lang['language']}={lang['percentage']}" for lang in shell_output
-        ])}")
+        ])}"
+        )
         # output looks like
         # [{"color":"#3572A5","language":"Python","percentage":"100.00%","type":"unknown"}]
         top_language = max(
@@ -51,7 +53,9 @@ async def lifespan(app: FastAPI):
             raise ValueError("Unable to determine code language in workspace")
         if not is_language_supported(top_language["language"]):
             raise ValueError(f"Unsupported code language: {top_language["lanaguage"]}")
-        logger.info(f"{top_language['language']} is the top language in the workspace and will be used for language server")
+        logger.info(
+            f"{top_language['language']} is the top language in the workspace and will be used for language server"
+        )
         settings.code_language = top_language["language"]
 
     assert settings.code_language is not None
@@ -67,9 +71,9 @@ app = FastAPI(lifespan=lifespan)
 async def definitions(
     path: str,
     line: int,
-    column: int,
+    character: int,
 ):
-    res = await app.state.lsp.request_definition(path, line, column)
+    res = await app.state.lsp.request_definition(path, line, character)
     return {"definitions": res}
 
 
@@ -77,9 +81,9 @@ async def definitions(
 async def references(
     path: str,
     line: int,
-    column: int,
+    character: int,
 ):
-    res = await app.state.lsp.request_references(path, line, column)
+    res = await app.state.lsp.request_references(path, line, character)
     return {"references": res}
 
 
@@ -104,15 +108,13 @@ async def symbols(
     # }
     # we just need to convert the `kind` to its string name
     return {
-        "symbols": list(
-            map(
-                lambda symbol: {
-                    **symbol,
-                    "kind": SymbolKind(symbol["kind"]).name,
-                },
-                res[0],
-            )
-        )
+        "symbols": [
+            {
+                **symbol,
+                "kind": SymbolKind(symbol["kind"]).name,
+            }
+            for symbol in res[0]
+        ]
     }
 
 

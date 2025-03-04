@@ -37,7 +37,7 @@ def get_language_parser(language: str):
 @dataclass
 class Identifier:
     name: str
-    char_index: int
+    character: int
 
 
 def parse_line(parser: Parser, line: str) -> list[Identifier]:
@@ -52,7 +52,7 @@ def parse_line(parser: Parser, line: str) -> list[Identifier]:
         for identifier in captures.get("identifier") or []
         if identifier.text is not None
     ]
-    identifiers.sort(key=lambda x: x.char_index)
+    identifiers.sort(key=lambda x: x.character)
     return identifiers
 
 
@@ -63,7 +63,7 @@ class ChangeType(Enum):
 
 @dataclass
 class Change:
-    line_index: int
+    line: int
     text: str
     type: ChangeType
     identifiers: list[Identifier]
@@ -115,37 +115,37 @@ def parse_diff_patch(patch: bytes, patch_language: str) -> list[Hunk]:
             hunks_query.captures(block_node)["hunk"], key=lambda x: x.start_byte
         )
         for hunk_node in hunk_nodes:
-            line_index_query = tree.language.query(
+            line_query = tree.language.query(
                 """
-                (location (linerange) @old_line_index (linerange) @new_line_index)
+                (location (linerange) @old_line (linerange) @new_line)
             """
             )
-            captures = line_index_query.captures(hunk_node)
+            captures = line_query.captures(hunk_node)
             # text should look like: -1,17
-            old_line_index = (
+            old_line = (
                 int(
-                    captures["old_line_index"][0]
+                    captures["old_line"][0]
                     .text.decode("utf8")
                     .strip()[1:]
                     .split(",")[0]
                 )
-                if captures["old_line_index"][0].text
+                if captures["old_line"][0].text
                 else None
             )
             # text should look like: +1,17
-            new_line_index = (
+            new_line = (
                 int(
-                    captures["new_line_index"][0]
+                    captures["new_line"][0]
                     .text.decode("utf8")
                     .strip()[1:]
                     .split(",")[0]
                 )
-                if captures["new_line_index"][0].text
+                if captures["new_line"][0].text
                 else None
             )
-            if old_line_index is None or new_line_index is None:
+            if old_line is None or new_line is None:
                 raise ValueError(
-                    "Could not find old_line_index or new_line_index while parsing diff patch"
+                    "Could not find old_line or new_line while parsing diff patch"
                 )
             # now we go through the changes in the hunk line by line
             changes = []
@@ -160,29 +160,29 @@ def parse_diff_patch(patch: bytes, patch_language: str) -> list[Hunk]:
                         Change(
                             # line numbers in diff are 1-based, we want to keep it zero-based for
                             # use in LSP later
-                            line_index=new_line_index - 1,
+                            line=new_line - 1,
                             text=text[1:],
                             type=ChangeType.Addition,
                             identifiers=parse_line(patch_parser, text[1:]),
                         )
                     )
-                    new_line_index += 1
+                    new_line += 1
                 elif text.startswith("-"):
                     changes.append(
                         Change(
                             # line numbers in diff are 1-based, we want to keep it zero-based for
                             # use in LSP later
-                            line_index=old_line_index - 1,
+                            line=old_line - 1,
                             text=text[1:],
                             type=ChangeType.Deletion,
                             identifiers=parse_line(patch_parser, text[1:]),
                         )
                     )
-                    old_line_index += 1
+                    old_line += 1
                 else:
                     # this is a context line that exists in both old and new files
-                    old_line_index += 1
-                    new_line_index += 1
+                    old_line += 1
+                    new_line += 1
             hunks.append(
                 Hunk(
                     old_file=old_file,

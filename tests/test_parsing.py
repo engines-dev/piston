@@ -126,34 +126,34 @@ def test_parse_diff_patch():
     assert len([c for c in hunks[0].changes if c.type == ChangeType.Deletion]) == 7
     # change is "-"
     assert hunks[0].changes[0].text == ""
-    assert hunks[0].changes[0].line_index == 1
+    assert hunks[0].changes[0].line == 1
     assert hunks[0].changes[0].identifiers == []
     assert hunks[0].changes[0].type == ChangeType.Deletion
     # change is "-from fastapi import FastAPI, Depends"
     assert hunks[0].changes[1].text == "from fastapi import FastAPI, Depends"
-    assert hunks[0].changes[1].line_index == 2
+    assert hunks[0].changes[1].line == 2
     assert hunks[0].changes[1].type == ChangeType.Deletion
     assert len(hunks[0].changes[1].identifiers) == 3
     assert hunks[0].changes[1].identifiers[0].name == "fastapi"
-    assert hunks[0].changes[1].identifiers[0].char_index == 5
+    assert hunks[0].changes[1].identifiers[0].character == 5
     assert hunks[0].changes[1].identifiers[1].name == "FastAPI"
-    assert hunks[0].changes[1].identifiers[1].char_index == 20
+    assert hunks[0].changes[1].identifiers[1].character == 20
     assert hunks[0].changes[1].identifiers[2].name == "Depends"
-    assert hunks[0].changes[1].identifiers[2].char_index == 29
+    assert hunks[0].changes[1].identifiers[2].character == 29
     # skip a couple lines and check on the first addition change
     # change is "+from fastapi import FastAPI, Depends, File"
     assert hunks[0].changes[3].text == "from fastapi import FastAPI, Depends, File"
-    assert hunks[0].changes[3].line_index == 1
+    assert hunks[0].changes[3].line == 1
     assert hunks[0].changes[3].type == ChangeType.Addition
     assert len(hunks[0].changes[3].identifiers) == 4
     assert hunks[0].changes[3].identifiers[0].name == "fastapi"
-    assert hunks[0].changes[3].identifiers[0].char_index == 5
+    assert hunks[0].changes[3].identifiers[0].character == 5
     assert hunks[0].changes[3].identifiers[1].name == "FastAPI"
-    assert hunks[0].changes[3].identifiers[1].char_index == 20
+    assert hunks[0].changes[3].identifiers[1].character == 20
     assert hunks[0].changes[3].identifiers[2].name == "Depends"
-    assert hunks[0].changes[3].identifiers[2].char_index == 29
+    assert hunks[0].changes[3].identifiers[2].character == 29
     assert hunks[0].changes[3].identifiers[3].name == "File"
-    assert hunks[0].changes[3].identifiers[3].char_index == 38
+    assert hunks[0].changes[3].identifiers[3].character == 38
 
     # hunk 1
     assert isinstance(hunks[1], Hunk)
