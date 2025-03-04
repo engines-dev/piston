@@ -1,5 +1,3 @@
-from enum import Enum
-
 from multilspy import LanguageServer
 from multilspy.multilspy_config import MultilspyConfig
 from multilspy.multilspy_logger import MultilspyLogger

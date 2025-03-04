@@ -74,7 +74,7 @@ markupsafe==3.0.2
     # via jinja2
 mdurl==0.1.2
     # via markdown-it-py
-multilspy @ git+https://github.com/engines-dev/multilspy.git@049928ee8ca47ec54ab45f8bb8a78fe85dc283c0
+multilspy @ git+https://github.com/engines-dev/multilspy.git@2ae175975058b384fb4cbe7c72e4f48a7f01479d
     # via piston (pyproject.toml)
 packaging==24.2
     # via pytest
@@ -82,6 +82,8 @@ parso==0.8.4
     # via jedi
 pluggy==1.5.0
     # via pytest
+psutil==7.0.0
+    # via multilspy
 pydantic==2.10.6
     # via
     #   fastapi
