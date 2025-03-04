@@ -6,6 +6,7 @@ import subprocess
 from typing import Annotated, Optional
 
 from fastapi import FastAPI, File
+from fastapi.responses import JSONResponse
 from multilspy.multilspy_types import SymbolKind
 from pydantic_settings import BaseSettings
 
@@ -73,8 +74,20 @@ async def definitions(
     line: int,
     character: int,
 ):
-    res = await app.state.lsp.request_definition(path, line, character)
-    return {"definitions": res}
+    try:
+        res = await app.state.lsp.request_definition(path, line, character)
+        return {"definitions": res}
+    except Exception as e:
+        if "Unexpected response from Language Server: None" in str(e):
+            return JSONResponse(
+                status_code=404,
+                content={
+                    "message": "No definitions found",
+                    "input": {"path": path, "line": line, "character": character},
+                },
+            )
+        else:
+            raise e
 
 
 @app.get("/references")
@@ -83,39 +96,63 @@ async def references(
     line: int,
     character: int,
 ):
-    res = await app.state.lsp.request_references(path, line, character)
-    return {"references": res}
+    try:
+        res = await app.state.lsp.request_references(path, line, character)
+        return {"references": res}
+    except Exception as e:
+        if "Unexpected response from Language Server: None" in str(e):
+            return JSONResponse(
+                status_code=404,
+                content={
+                    "message": "No references found",
+                    "input": {"path": path, "line": line, "character": character},
+                },
+            )
+        else:
+            raise e
 
 
 @app.get("/symbols")
 async def symbols(
     path: str,
 ):
-    res = await app.state.lsp.request_document_symbols(path)
-    # each symbol is of the shape
-    # {
-    #   "name": "is_even",
-    #   "kind": 12,
-    #   "range": {
-    #     "start": { "line": 0, "character": 0 },
-    #     "end": { "line": 2, "character": 26 }
-    #   },
-    #   "selectionRange": {
-    #     "start": { "line": 0, "character": 4 },
-    #     "end": { "line": 0, "character": 11 }
-    #   },
-    #   "detail": "def is_even"
-    # }
-    # we just need to convert the `kind` to its string name
-    return {
-        "symbols": [
-            {
-                **symbol,
-                "kind": SymbolKind(symbol["kind"]).name,
-            }
-            for symbol in res[0]
-        ]
-    }
+    try:
+        res = await app.state.lsp.request_document_symbols(path)
+        # each symbol is of the shape
+        # {
+        #   "name": "is_even",
+        #   "kind": 12,
+        #   "range": {
+        #     "start": { "line": 0, "character": 0 },
+        #     "end": { "line": 2, "character": 26 }
+        #   },
+        #   "selectionRange": {
+        #     "start": { "line": 0, "character": 4 },
+        #     "end": { "line": 0, "character": 11 }
+        #   },
+        #   "detail": "def is_even"
+        # }
+        # we just need to convert the `kind` to its string name
+        return {
+            "symbols": [
+                {
+                    **symbol,
+                    "kind": SymbolKind(symbol["kind"]).name,
+                }
+                for symbol in res[0]
+            ]
+        }
+    except Exception as e:
+        if "Unexpected response from Language Server: None" in str(e):
+            return JSONResponse(
+                status_code=404,
+                content={
+                    "message": "No symbols found",
+                    "input": {"path": path},
+                },
+            )
+        else:
+            raise e
 
 
 @app.post("/patch-digest")
