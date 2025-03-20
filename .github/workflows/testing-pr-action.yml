@@ -1,0 +1,44 @@
+name: Testing PR-writing action
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+  packages: read
+  pull-requests: write
+
+jobs:
+  code-review:
+    name: Potentially reviewing the code and updating the PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Review code
+        id: review-action
+        uses: engines-dev/github-action@v0
+        with:
+          pr_sha: ${{ github.event.pull_request.head.sha }}
+          file_path: "README.md"
+          test_run_cmd: "pytest"
+
+      - name: Create or Update Pull Request
+        uses: gr2m/create-or-update-pull-request-action@v1
+        with:
+          branch: ${{ github.event.pull_request.head.ref }}
+          commit-message:
+            "Updated ${{ steps.review-action.outputs.file_path }} with `${{
+            steps.review-action.outputs.edit }}`"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
