@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: read
+  contents: write
   packages: read
   pull-requests: write
 
@@ -22,12 +22,23 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Review code and update CR
+      - name: Review code
+        id: review-action
         uses: engines-dev/github-action@v0
         with:
           pr_sha: ${{ github.event.pull_request.head.sha }}
           file_path: "README.md"
           test_run_cmd: "pytest"
+
+      - name: Create or Update Pull Request
+        uses: gr2m/create-or-update-pull-request-action@v1
+        with:
+          branch: ${{ github.event.pull_request.head.ref }}
+          commit-message:
+            "Updated ${{ steps.review-action.outputs.file_path }} with `${{
+            steps.review-action.outputs.edit }}`"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
