@@ -1,0 +1,33 @@
+name: Testing PR-writing action
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: read
+  pull-requests: write
+
+jobs:
+  code-review:
+    name: Potentially reviewing the code and updating the PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+
+      - name: Review code and update CR
+        uses: engines-dev/github-action@v0
+        with:
+          pr_sha: ${{ github.event.pull_request.head.sha }}
+          file_path: "README.md"
+          test_run_cmd: "pytest"
